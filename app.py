@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import torch
+
 torch.set_num_threads(1)
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, AutoConfig
 from safetensors.torch import load_file
@@ -58,38 +59,6 @@ LABEL_DESCRIPTIONS = {
 # ============================================================================
 # MODEL LOADING
 # ============================================================================
-def load_model_from_local():
-    """Load model from local safetensors file"""
-    try:
-        logger.info("Loading model from local file...")
-
-        tok = AutoTokenizer.from_pretrained(config.MODEL_NAME)
-
-        cfg = AutoConfig.from_pretrained(config.MODEL_NAME)
-        cfg.num_labels = 4
-        cfg.hidden_dropout_prob = 0.1
-        cfg.attention_probs_dropout_prob = 0.1
-        cfg.classifier_dropout = 0.1
-
-        mdl = AutoModelForSequenceClassification.from_pretrained(
-            config.MODEL_NAME, config=cfg, ignore_mismatched_sizes=True
-        )
-
-        # Load trained weights
-        state_dict = load_file(config.MODEL_PATH, device=str(config.DEVICE))
-        mdl.load_state_dict(state_dict)
-
-        mdl = mdl.to(config.DEVICE)
-        mdl.eval()
-
-        logger.info(f"✅ Model loaded from local on {config.DEVICE}")
-        return mdl, tok, "local"
-
-    except Exception as e:
-        logger.error(f"❌ Error loading local model: {e}")
-        raise
-
-
 def load_model_from_hf():
     """Load model from Hugging Face Hub"""
     try:
@@ -118,6 +87,7 @@ def load_model_from_hf():
 def initialize_model():
     global model, tokenizer, stats
     try:
+        # langsung dari Hugging Face
         model, tokenizer, source = load_model_from_hf()
         stats["model_loaded_at"] = datetime.now()
         stats["model_source"] = source
@@ -125,6 +95,7 @@ def initialize_model():
     except Exception as e:
         logger.error(f"❌ Failed to initialize model: {e}")
         raise
+
 
 # ============================================================================
 # PREDICTION FUNCTIONS
