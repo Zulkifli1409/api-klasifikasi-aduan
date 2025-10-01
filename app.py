@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import torch
+torch.set_num_threads(1)
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, AutoConfig
 from safetensors.torch import load_file
 import time
@@ -115,25 +116,15 @@ def load_model_from_hf():
 
 
 def initialize_model():
-    """Initialize model on startup"""
     global model, tokenizer, stats
-
     try:
-        # Try local first, fallback to HF
-        try:
-            model, tokenizer, source = load_model_from_local()
-        except:
-            model, tokenizer, source = load_model_from_hf()
-
+        model, tokenizer, source = load_model_from_hf()
         stats["model_loaded_at"] = datetime.now()
         stats["model_source"] = source
-
         logger.info(f"✅ Model initialized from {source}")
-
     except Exception as e:
         logger.error(f"❌ Failed to initialize model: {e}")
         raise
-
 
 # ============================================================================
 # PREDICTION FUNCTIONS
