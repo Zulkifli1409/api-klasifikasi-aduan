@@ -1,6 +1,6 @@
-# 📋 Dokumentasi API Klasifikasi Aduan
+# 📋 API Klasifikasi Aduan v5
 
-API untuk mengklasifikasikan teks aduan masyarakat ke dalam 4 kategori: DARURAT, PRIORITAS, UMUM, dan LAINNYA menggunakan model IndoBERT.
+API untuk mengklasifikasikan teks aduan masyarakat ke dalam **5 kategori** menggunakan model IndoBERT yang telah di-fine-tune.
 
 **Base URL:** `https://api-klasifikasi-aduan.up.railway.app`
 
@@ -9,62 +9,105 @@ API untuk mengklasifikasikan teks aduan masyarakat ke dalam 4 kategori: DARURAT,
 ## 📑 Daftar Isi
 
 - [Informasi Umum](#-informasi-umum)
-- [Kategori Label](#-kategori-label)
+- [Kategori Label](#️-kategori-label)
+- [Mode Prediksi](#-mode-prediksi)
 - [Endpoint API](#-endpoint-api)
-  - [1. Root](#1-root)
-  - [2. Health Check](#2-health-check)
-  - [3. Statistik](#3-statistik)
-  - [4. Daftar Label](#4-daftar-label)
-  - [5. Prediksi Tunggal](#5-prediksi-tunggal)
-  - [6. Prediksi Batch](#6-prediksi-batch)
-  - [7. Prediksi dari CSV](#7-prediksi-dari-csv)
-  - [8. Dokumentasi](#8-dokumentasi)
-- [Error Handling](#-error-handling)
+- [Error Handling](#️-error-handling)
 - [Contoh Penggunaan](#-contoh-penggunaan)
 - [Catatan Penting](#-catatan-penting)
-- [Informasi Tambahan](#-informasi-tambahan)
-- [Kontak](#-kontak)
+- [Deployment](#-deployment)
 
 ---
 
 ## 🔍 Informasi Umum
 
-API ini menggunakan model **IndoBERT** yang telah dilatih untuk mengklasifikasikan aduan masyarakat. Model dapat memproses teks dalam Bahasa Indonesia dan memberikan prediksi dengan skor confidence.
+API ini menggunakan model **IndoBERT** (v5) yang telah dilatih untuk mengklasifikasikan aduan masyarakat dengan 5 kategori. Model dapat memproses teks dalam Bahasa Indonesia dan memberikan prediksi dengan berbagai tingkat detail analisis.
 
-**Fitur Utama:**
-- ✅ Prediksi tunggal dan batch
+### ✨ Fitur Utama
+
+- ✅ **3 Mode Prediksi**: Basic, Advanced, dan Expert
+- ✅ Prediksi tunggal dan batch (hingga 100 teks)
 - ✅ Upload dan proses file CSV
-- ✅ Skor confidence untuk semua kategori
-- ✅ Pemrosesan cepat dan efisien
-- ✅ Statistik penggunaan API
+- ✅ Analisis confidence dan risk level
+- ✅ Rekomendasi aksi berdasarkan kategori
+- ✅ Entropy analysis untuk mengukur ketidakpastian
+- ✅ Statistik penggunaan API real-time
+
+### 🔧 Teknologi
+
+| Komponen | Detail |
+|----------|--------|
+| **Model** | Zulkifli1409/aduan-model (HuggingFace) |
+| **Base Model** | indobenchmark/indobert-base-p1 |
+| **Framework** | Flask + PyTorch + Transformers |
+| **Preprocessing** | Text cleaning, URL removal, max 150 chars |
+| **Max Length** | 40 tokens |
+| **Device** | CPU/CUDA auto-detect |
 
 ---
 
 ## 🏷️ Kategori Label
 
-| Label | Deskripsi |
-|-------|-----------|
-| **DARURAT** | Memerlukan penanganan segera (kebakaran, kecelakaan, bencana) |
-| **PRIORITAS** | Perlu penanganan cepat (infrastruktur rusak, kebersihan) |
-| **UMUM** | Informasi/pertanyaan umum |
-| **LAINNYA** | Aduan lain yang tidak termasuk kategori di atas |
+| Label | Deskripsi | Risk Level |
+|-------|-----------|------------|
+| **Pinalti** | Konten tidak pantas, kasar, atau melanggar aturan | CRITICAL |
+| **Darurat** | Memerlukan penanganan segera (kebakaran, kecelakaan, bencana) | HIGH |
+| **Prioritas** | Perlu penanganan cepat (infrastruktur rusak, fasilitas umum) | MEDIUM |
+| **Umum** | Aduan umum yang perlu ditindaklanjuti | NORMAL |
+| **Lainnya** | Informasi, pertanyaan, atau aduan lain | NORMAL |
+
+---
+
+## 🎯 Mode Prediksi
+
+### 1️⃣ Basic Mode
+Mode standar untuk prediksi cepat dengan informasi esensial.
+
+**Output:**
+- Label prediksi
+- Confidence score
+- All probabilities (opsional)
+- Processing time
+
+### 2️⃣ Advanced Mode
+Mode dengan analisis tambahan untuk decision making.
+
+**Output:**
+- Primary & secondary predictions
+- Confidence level (HIGH/MEDIUM/LOW)
+- Risk assessment (CRITICAL/HIGH/MEDIUM/NORMAL)
+- Uncertainty detection
+- Review requirement flag
+
+### 3️⃣ Expert Mode
+Mode paling lengkap dengan analisis mendalam dan rekomendasi.
+
+**Output:**
+- Top 3 predictions dengan ranking
+- Entropy analysis (normalized)
+- Decision confidence (VERY_HIGH → VERY_LOW)
+- Action recommendations per kategori
+- Warning system
+- Metadata lengkap
 
 ---
 
 ## 🔌 Endpoint API
 
 ### 1. Root
+
 ```http
 GET /
-````
+```
 
 **Response:**
-
 ```json
 {
-  "message": "Aduan Classification API",
-  "version": "v1",
-  "docs": "/docs"
+  "service": "Aduan Classification API",
+  "version": "v5 (5 Labels)",
+  "model": "Zulkifli1409/aduan-model",
+  "labels": ["Pinalti", "Darurat", "Prioritas", "Umum", "Lainnya"],
+  "modes": ["basic", "advanced", "expert"]
 }
 ```
 
@@ -77,7 +120,6 @@ GET /health
 ```
 
 **Response:**
-
 ```json
 {
   "status": "healthy",
@@ -85,7 +127,7 @@ GET /health
   "device": "cpu",
   "uptime_seconds": 3600.5,
   "total_predictions": 1250,
-  "version": "v1"
+  "model_version": "v5"
 }
 ```
 
@@ -98,7 +140,6 @@ GET /stats
 ```
 
 **Response:**
-
 ```json
 {
   "uptime_seconds": 7200.8,
@@ -106,9 +147,11 @@ GET /stats
   "total_batch_predictions": 15000,
   "total_errors": 5,
   "model_info": {
-    "loaded_at": "2025-10-01T10:30:00",
+    "loaded_at": "2025-10-05T10:30:00",
     "device": "cpu",
-    "source": "huggingface"
+    "source": "huggingface",
+    "version": "v5",
+    "labels": 5
   }
 }
 ```
@@ -122,22 +165,23 @@ GET /labels
 ```
 
 **Response:**
-
 ```json
 {
-  "labels": ["DARURAT", "PRIORITAS", "UMUM", "LAINNYA"],
+  "labels": ["Pinalti", "Darurat", "Prioritas", "Umum", "Lainnya"],
   "descriptions": {
-    "DARURAT": "Memerlukan penanganan segera (kebakaran, kecelakaan, bencana)",
-    "PRIORITAS": "Perlu penanganan cepat (infrastruktur rusak, kebersihan)",
-    "UMUM": "Informasi/pertanyaan umum",
-    "LAINNYA": "Aduan lain yang tidak termasuk kategori di atas"
-  }
+    "Pinalti": "Konten tidak pantas, kasar, atau melanggar aturan",
+    "Darurat": "Memerlukan penanganan segera (kebakaran, kecelakaan, bencana)",
+    "Prioritas": "Perlu penanganan cepat (infrastruktur rusak, fasilitas umum)",
+    "Umum": "Aduan umum yang perlu ditindaklanjuti",
+    "Lainnya": "Informasi, pertanyaan, atau aduan lain"
+  },
+  "count": 5
 }
 ```
 
 ---
 
-### 5. Prediksi Tunggal
+### 5. Prediksi Tunggal - Basic
 
 ```http
 POST /predict
@@ -145,33 +189,167 @@ Content-Type: application/json
 ```
 
 **Body:**
-
 ```json
 {
-  "text": "Ada kebakaran besar di jalan sudirman, tolong kirim pemadam kebakaran segera!",
+  "text": "anjing kau dasar tolol",
   "return_all_scores": true
 }
 ```
 
 **Response:**
-
 ```json
 {
-  "label": "DARURAT",
+  "label": "Pinalti",
   "confidence": 0.9823,
   "processing_time_ms": 45.2,
   "all_scores": {
-    "DARURAT": 0.9823,
-    "PRIORITAS": 0.0145,
-    "UMUM": 0.0021,
-    "LAINNYA": 0.0011
+    "Pinalti": 0.9823,
+    "Darurat": 0.0089,
+    "Prioritas": 0.0056,
+    "Umum": 0.0021,
+    "Lainnya": 0.0011
   }
 }
 ```
 
 ---
 
-### 6. Prediksi Batch
+### 6. Prediksi Tunggal - Advanced
+
+```http
+POST /predict/advanced
+Content-Type: application/json
+```
+
+**Body:**
+```json
+{
+  "text": "Ada kebakaran besar di pasar sudirman",
+  "threshold": 0.7
+}
+```
+
+**Response:**
+```json
+{
+  "text_original": "Ada kebakaran besar di pasar sudirman",
+  "text_cleaned": "Ada kebakaran besar di pasar sudirman",
+  "prediction": {
+    "primary": {
+      "label": "Darurat",
+      "confidence": 0.9512,
+      "description": "Memerlukan penanganan segera (kebakaran, kecelakaan, bencana)"
+    },
+    "secondary": {
+      "label": "Prioritas",
+      "confidence": 0.0345,
+      "description": "Perlu penanganan cepat (infrastruktur rusak, fasilitas umum)"
+    }
+  },
+  "analysis": {
+    "confidence_level": "HIGH",
+    "risk_level": "HIGH",
+    "uncertain": false,
+    "requires_review": false
+  },
+  "all_probabilities": {
+    "Pinalti": 0.0012,
+    "Darurat": 0.9512,
+    "Prioritas": 0.0345,
+    "Umum": 0.0089,
+    "Lainnya": 0.0042
+  },
+  "metadata": {
+    "processing_time_ms": 52.3,
+    "threshold_used": 0.7,
+    "model_version": "v5"
+  }
+}
+```
+
+---
+
+### 7. Prediksi Tunggal - Expert
+
+```http
+POST /predict/expert
+Content-Type: application/json
+```
+
+**Body:**
+```json
+{
+  "text": "Jalan berlubang besar di jalan merdeka",
+  "include_attention": false
+}
+```
+
+**Response:**
+```json
+{
+  "input": {
+    "text_original": "Jalan berlubang besar di jalan merdeka",
+    "text_cleaned": "Jalan berlubang besar di jalan merdeka",
+    "text_length": 39
+  },
+  "classification": {
+    "primary_prediction": {
+      "rank": 1,
+      "label": "Prioritas",
+      "confidence": 0.8734,
+      "description": "Perlu penanganan cepat (infrastruktur rusak, fasilitas umum)"
+    },
+    "alternative_predictions": [
+      {
+        "rank": 2,
+        "label": "Umum",
+        "confidence": 0.0956,
+        "description": "Aduan umum yang perlu ditindaklanjuti"
+      },
+      {
+        "rank": 3,
+        "label": "Darurat",
+        "confidence": 0.0189,
+        "description": "Memerlukan penanganan segera (kebakaran, kecelakaan, bencana)"
+      }
+    ],
+    "decision_confidence": "HIGH"
+  },
+  "probability_analysis": {
+    "all_probabilities": {
+      "Pinalti": {"value": 0.0023, "percentage": "0.23%"},
+      "Darurat": {"value": 0.0189, "percentage": "1.89%"},
+      "Prioritas": {"value": 0.8734, "percentage": "87.34%"},
+      "Umum": {"value": 0.0956, "percentage": "9.56%"},
+      "Lainnya": {"value": 0.0098, "percentage": "0.98%"}
+    },
+    "entropy": {
+      "value": 0.4523,
+      "normalized": 0.2809,
+      "interpretation": "Low"
+    }
+  },
+  "recommendations": {
+    "actions": [
+      "Jadwalkan penanganan dalam 24 jam",
+      "Alokasikan sumber daya",
+      "Monitor perkembangan"
+    ],
+    "warnings": ["No warnings"],
+    "review_required": false
+  },
+  "metadata": {
+    "processing_time_ms": 58.7,
+    "model_version": "v5",
+    "model_type": "expert",
+    "timestamp": "2025-10-05T14:23:45.123456"
+  }
+}
+```
+
+---
+
+### 8. Prediksi Batch
 
 ```http
 POST /predict/batch
@@ -179,36 +357,55 @@ Content-Type: application/json
 ```
 
 **Body:**
-
 ```json
 {
   "texts": [
-    "Jalan rusak parah di depan kantor",
-    "Ada kecelakaan mobil di tol",
-    "Bagaimana cara membuat KTP?"
+    "anjing kau dasar bodoh",
+    "Ada kebakaran di pasar",
+    "Jalan berlubang besar",
+    "Kapan jadwal vaksinasi?"
   ],
-  "return_all_scores": true
+  "mode": "advanced"
 }
 ```
 
-**Response (ringkas):**
+**Catatan:** Mode yang tersedia: `basic`, `advanced`, `expert`
 
+**Response:**
 ```json
 {
   "predictions": [
-    {"label": "PRIORITAS", "confidence": 0.8956},
-    {"label": "DARURAT", "confidence": 0.9512},
-    {"label": "UMUM", "confidence": 0.9234}
+    {
+      "prediction": {
+        "primary": {"label": "Pinalti", "confidence": 0.9823}
+      }
+    },
+    {
+      "prediction": {
+        "primary": {"label": "Darurat", "confidence": 0.9512}
+      }
+    },
+    {
+      "prediction": {
+        "primary": {"label": "Prioritas", "confidence": 0.8734}
+      }
+    },
+    {
+      "prediction": {
+        "primary": {"label": "Lainnya", "confidence": 0.9156}
+      }
+    }
   ],
-  "total_processed": 3,
-  "total_time_ms": 45.8,
-  "average_time_ms": 15.3
+  "total_processed": 4,
+  "mode": "advanced",
+  "total_time_ms": 189.4,
+  "average_time_ms": 47.35
 }
 ```
 
 ---
 
-### 7. Prediksi dari CSV
+### 9. Prediksi dari CSV
 
 ```http
 POST /predict/csv
@@ -216,83 +413,212 @@ Content-Type: multipart/form-data
 ```
 
 **Form Data:**
-
-* `file` (required): File CSV
-* `text_column` (optional): Kolom teks (default: `teks_aduan`)
+- `file` (required): File CSV
+- `text_column` (optional): Nama kolom teks (default: `teks_aduan`)
+- `mode` (optional): Mode prediksi - `basic`, `advanced`, atau `expert` (default: `basic`)
 
 **Contoh Input CSV:**
 
 ```csv
 id,teks_aduan,lokasi
-1,Ada kebakaran di pasar,Jl. Sudirman
-2,Jalan berlubang besar,Jl. Gatot Subroto
-3,Kapan jadwal vaksinasi?,Puskesmas A
+1,anjing kau dasar tolol,Online
+2,Ada kebakaran di pasar,Jl. Sudirman
+3,Jalan berlubang besar,Jl. Gatot Subroto
+4,Kapan jadwal vaksinasi?,Puskesmas A
 ```
 
-**Response:** File CSV hasil prediksi dengan tambahan kolom:
+**Output (mode=basic):**
+```csv
+id,teks_aduan,lokasi,predicted_label,confidence
+1,anjing kau dasar tolol,Online,Pinalti,0.9823
+2,Ada kebakaran di pasar,Jl. Sudirman,Darurat,0.9512
+3,Jalan berlubang besar,Jl. Gatot Subroto,Prioritas,0.8734
+4,Kapan jadwal vaksinasi?,Puskesmas A,Lainnya,0.9156
+```
 
-* `predicted_label`
-* `confidence`
-* `prob_darurat`
-* `prob_prioritas`
-* `prob_umum`
-* `prob_lainnya`
+**Output (mode=advanced):**
+```csv
+id,teks_aduan,lokasi,predicted_label,confidence,confidence_level,risk_level
+1,anjing kau dasar tolol,Online,Pinalti,0.9823,HIGH,CRITICAL
+2,Ada kebakaran di pasar,Jl. Sudirman,Darurat,0.9512,HIGH,HIGH
+3,Jalan berlubang besar,Jl. Gatot Subroto,Prioritas,0.8734,HIGH,MEDIUM
+4,Kapan jadwal vaksinasi?,Puskesmas A,Lainnya,0.9156,HIGH,NORMAL
+```
+
+**Output (mode=expert):**
+```csv
+id,teks_aduan,lokasi,predicted_label,confidence,decision_confidence,entropy
+1,anjing kau dasar tolol,Online,Pinalti,0.9823,VERY_HIGH,0.0234
+2,Ada kebakaran di pasar,Jl. Sudirman,Darurat,0.9512,VERY_HIGH,0.0567
+3,Jalan berlubang besar,Jl. Gatot Subroto,Prioritas,0.8734,HIGH,0.2809
+4,Kapan jadwal vaksinasi?,Puskesmas A,Lainnya,0.9156,VERY_HIGH,0.1234
+```
+
+**Response:** File CSV hasil prediksi akan di-download otomatis dengan nama:
+- `predictions_basic_YYYYMMDD_HHMMSS.csv`
+- `predictions_advanced_YYYYMMDD_HHMMSS.csv`
+- `predictions_expert_YYYYMMDD_HHMMSS.csv`
 
 ---
 
-### 8. Dokumentasi
+### 10. Dokumentasi
 
 ```http
 GET /docs
 ```
 
+Menampilkan dokumentasi lengkap API dalam format JSON.
+
 ---
 
 ## ⚠️ Error Handling
 
-* **400 Bad Request**
+### 400 Bad Request
 
 ```json
-{"error": "Missing 'text' field"}
+{
+  "error": "Missing 'text' field"
+}
 ```
 
-* **404 Not Found**
-
 ```json
-{"error": "Endpoint not found"}
+{
+  "error": "Text cannot be empty"
+}
 ```
 
-* **500 Internal Server Error**
-
 ```json
-{"error": "Internal server error"}
+{
+  "error": "Maximum 100 texts per batch"
+}
 ```
 
-* **503 Service Unavailable**
+```json
+{
+  "error": "Invalid mode. Use: basic, advanced, or expert"
+}
+```
+
+### 404 Not Found
 
 ```json
-{"error": "Model not loaded"}
+{
+  "error": "Endpoint not found",
+  "docs": "/docs"
+}
+```
+
+### 500 Internal Server Error
+
+```json
+{
+  "error": "Internal server error"
+}
+```
+
+### 503 Service Unavailable
+
+```json
+{
+  "error": "Model not loaded"
+}
 ```
 
 ---
 
 ## 💻 Contoh Penggunaan
 
-### Python
+### Python - Basic
 
 ```python
 import requests
 
 BASE_URL = "https://api-klasifikasi-aduan.up.railway.app"
 
-res = requests.post(f"{BASE_URL}/predict", json={"text": "Ada kebakaran di pasar"})
-print(res.json())
+# Prediksi basic
+response = requests.post(
+    f"{BASE_URL}/predict",
+    json={"text": "Ada kebakaran di pasar"}
+)
+print(response.json())
 ```
 
-### JavaScript
+### Python - Advanced
+
+```python
+# Prediksi advanced
+response = requests.post(
+    f"{BASE_URL}/predict/advanced",
+    json={
+        "text": "Ada kebakaran besar di pasar",
+        "threshold": 0.7
+    }
+)
+result = response.json()
+print(f"Label: {result['prediction']['primary']['label']}")
+print(f"Risk Level: {result['analysis']['risk_level']}")
+```
+
+### Python - Expert
+
+```python
+# Prediksi expert
+response = requests.post(
+    f"{BASE_URL}/predict/expert",
+    json={"text": "Jalan berlubang besar"}
+)
+result = response.json()
+print(f"Label: {result['classification']['primary_prediction']['label']}")
+print(f"Confidence: {result['classification']['decision_confidence']}")
+print(f"Rekomendasi: {result['recommendations']['actions']}")
+```
+
+### Python - Batch
+
+```python
+# Batch prediction dengan mode advanced
+texts = [
+    "anjing kau dasar bodoh",
+    "Ada kebakaran di pasar",
+    "Jalan berlubang besar",
+    "Kapan jadwal vaksinasi?"
+]
+
+response = requests.post(
+    f"{BASE_URL}/predict/batch",
+    json={"texts": texts, "mode": "advanced"}
+)
+results = response.json()
+print(f"Total processed: {results['total_processed']}")
+for pred in results['predictions']:
+    print(pred['prediction']['primary'])
+```
+
+### Python - CSV Upload
+
+```python
+# Upload CSV
+with open('aduan.csv', 'rb') as f:
+    response = requests.post(
+        f"{BASE_URL}/predict/csv",
+        files={'file': f},
+        data={'text_column': 'teks_aduan', 'mode': 'expert'}
+    )
+
+# Save hasil
+with open('hasil_prediksi.csv', 'wb') as f:
+    f.write(response.content)
+```
+
+### JavaScript/Node.js - Basic
 
 ```javascript
-fetch("https://api-klasifikasi-aduan.up.railway.app/predict", {
+const fetch = require('node-fetch');
+
+const BASE_URL = "https://api-klasifikasi-aduan.up.railway.app";
+
+// Prediksi basic
+fetch(`${BASE_URL}/predict`, {
   method: "POST",
   headers: {"Content-Type": "application/json"},
   body: JSON.stringify({text: "Ada kebakaran di pasar"})
@@ -301,7 +627,26 @@ fetch("https://api-klasifikasi-aduan.up.railway.app/predict", {
 .then(console.log);
 ```
 
-### cURL
+### JavaScript - Advanced
+
+```javascript
+// Prediksi advanced
+fetch(`${BASE_URL}/predict/advanced`, {
+  method: "POST",
+  headers: {"Content-Type": "application/json"},
+  body: JSON.stringify({
+    text: "Ada kebakaran besar di pasar",
+    threshold: 0.7
+  })
+})
+.then(r => r.json())
+.then(result => {
+  console.log(`Label: ${result.prediction.primary.label}`);
+  console.log(`Risk: ${result.analysis.risk_level}`);
+});
+```
+
+### cURL - Basic
 
 ```bash
 curl -X POST https://api-klasifikasi-aduan.up.railway.app/predict \
@@ -309,31 +654,180 @@ curl -X POST https://api-klasifikasi-aduan.up.railway.app/predict \
   -d '{"text": "Ada kebakaran di pasar"}'
 ```
 
+### cURL - Advanced
+
+```bash
+curl -X POST https://api-klasifikasi-aduan.up.railway.app/predict/advanced \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Ada kebakaran besar di pasar",
+    "threshold": 0.7
+  }'
+```
+
+### cURL - Expert
+
+```bash
+curl -X POST https://api-klasifikasi-aduan.up.railway.app/predict/expert \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Jalan berlubang besar"}'
+```
+
+### cURL - Batch
+
+```bash
+curl -X POST https://api-klasifikasi-aduan.up.railway.app/predict/batch \
+  -H "Content-Type: application/json" \
+  -d '{
+    "texts": ["Ada kebakaran", "Jalan rusak"],
+    "mode": "advanced"
+  }'
+```
+
+### cURL - CSV Upload
+
+```bash
+curl -X POST https://api-klasifikasi-aduan.up.railway.app/predict/csv \
+  -F "file=@aduan.csv" \
+  -F "text_column=teks_aduan" \
+  -F "mode=expert" \
+  -o hasil_prediksi.csv
+```
+
 ---
 
 ## 📝 Catatan Penting
 
-1. Maksimal **1000 karakter** per teks
-2. Maksimal **100 teks** per batch
-3. File CSV harus valid dengan encoding **UTF-8**
-4. Jangan spam request (rate limiting berlaku)
+### Batasan
+
+| Item | Limit |
+|------|-------|
+| Maksimal karakter per teks | 1000 karakter |
+| Maksimal teks per batch | 100 teks |
+| File CSV encoding | UTF-8 |
+| Max length token | 40 tokens |
+
+### Best Practices
+
+1. **Pilih mode yang sesuai:**
+   - Gunakan `basic` untuk aplikasi real-time yang butuh respons cepat
+   - Gunakan `advanced` untuk sistem yang memerlukan analisis risk level
+   - Gunakan `expert` untuk decision support system yang memerlukan analisis lengkap
+
+2. **Batch processing:**
+   - Untuk volume besar, gunakan batch endpoint atau CSV upload
+   - Batch lebih efisien dari pada multiple single requests
+
+3. **Threshold tuning (advanced mode):**
+   - Default: 0.7
+   - Tingkatkan untuk mengurangi false positive
+   - Turunkan untuk mengurangi false negative
+
+4. **Error handling:**
+   - Selalu cek status code
+   - Implementasi retry logic untuk 500/503 errors
+   - Log error untuk debugging
+
+### Rekomendasi Penggunaan
+
+| Use Case | Mode yang Disarankan |
+|----------|---------------------|
+| Chat bot real-time | Basic |
+| Sistem ticketing | Advanced |
+| Dashboard monitoring | Advanced |
+| Audit & compliance | Expert |
+| Research & analysis | Expert |
 
 ---
 
-## 🔗 Informasi Tambahan
+## 🚀 Deployment
 
-* **Model:** IndoBERT (indobenchmark/indobert-base-p1)
-* **Framework:** Flask + PyTorch + Transformers
-* **Deployment:** Railway
-* **Bahasa:** Indonesia
+### Requirements
+
+```txt
+flask==3.0.0
+flask-cors==4.0.0
+torch==2.1.0
+transformers==4.35.0
+safetensors==0.4.0
+pandas==2.1.0
+```
+
+### Environment Variables
+
+```bash
+PORT=8000  # Default port
+```
+
+### Local Development
+
+```bash
+# Clone repository
+git clone <repo-url>
+cd <repo-name>
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run server
+python app.py
+```
+
+Server akan berjalan di `http://localhost:8000`
+
+### Docker
+
+```dockerfile
+FROM python:3.10-slim
+
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+EXPOSE 8000
+CMD ["python", "app.py"]
+```
+
+```bash
+# Build
+docker build -t aduan-api .
+
+# Run
+docker run -p 8000:8000 aduan-api
+```
+
+### Railway Deployment
+
+1. Push code ke GitHub
+2. Connect repository di Railway
+3. Railway akan auto-detect Flask app
+4. Set environment variable jika diperlukan
+5. Deploy!
 
 ---
 
-## 📧 Kontak
+## 📊 Performance
 
-Jika ada pertanyaan atau kendala, silakan hubungi tim pengembang.
+| Metric | Value |
+|--------|-------|
+| Average latency (basic) | ~40-50ms |
+| Average latency (advanced) | ~50-60ms |
+| Average latency (expert) | ~55-65ms |
+| Throughput | ~20-25 req/sec |
+| Model size | ~400MB |
 
 ---
 
-**© 2025 API Klasifikasi Aduan**
+## 🔗 Links
 
+- **Model:** [Zulkifli1409/aduan-model](https://huggingface.co/Zulkifli1409/aduan-model)
+- **Base Model:** [indobenchmark/indobert-base-p1](https://huggingface.co/indobenchmark/indobert-base-p1)
+- **API Docs:** `/docs` endpoint
+
+---
+
+## 📧 Support
+
+Jika ada pertanyaan, bug report, atau feature request, silak
