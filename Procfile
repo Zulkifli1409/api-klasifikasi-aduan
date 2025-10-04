@@ -1,1 +1,1 @@
-bash app.sh
+web: bash app.sh
